@@ -2269,7 +2269,7 @@ function render(){
 let envio = {st:"idle", msg:""};
 function envioHTML(){
   const nome = identity && identity.nome ? esc(identity.nome.split(" ")[0]) : "", mail = identity && identity.email ? esc(identity.email) : "";
-  if(state.enviado) return `${P("Obrigada, <b>"+nome+"</b>! Enviamos a sua devolutiva para <b>"+mail+"</b>.")}${P("Se não a encontrar em alguns minutos, olhe também a caixa de spam.")}<p><button class="btn-go" data-act="refazer" style="position:relative;font-size:34px">REFAZER O TESTE<i></i></button></p>`;
+  if(state.enviado) return `${P("Obrigada, <b>"+nome+"</b>! Enviamos a sua devolutiva para <b>"+mail+"</b>.")}${P("Se não a encontrar em alguns minutos, olhe também a caixa de spam.")}`;
   if(envio.st==="gerando") return P("Estamos montando a sua devolutiva e enviando para <b>"+mail+"</b>… Isso leva alguns segundos.");
   if(envio.st==="local") return `${P("Devolutiva gerada (modo de teste, sem Apps Script configurado).")}<p><a class="lb-pdf" href="${envio.url}" download="devolutiva-voz-em-acao.pdf" style="font-size:34px">Baixar o PDF</a></p>`;
   if(envio.st==="erro") return `${P("Não foi possível enviar a devolutiva agora: "+esc(envio.msg||"erro desconhecido")+".")}<p><button class="btn-go" data-act="enviar" style="position:relative;font-size:34px">TENTAR DE NOVO<i></i></button></p>`;
@@ -2418,7 +2418,8 @@ function arcText(doc,label,cx,cy,rr,mid,fs){
     if(c!==" ") doc.text(c,bx-Math.cos(phi)*w/2,by-Math.sin(phi)*w/2,{angle:-phi*180/Math.PI});
   });
 }
-const WHEEL_LABELS = {"Comunicação Não Violenta":"CNV"};
+const WHEEL_LABELS = {};
+const WHEEL_2L = {"Linguagem Corporal":["LINGUAGEM","CORPORAL"],"Conversas Difíceis":["CONVERSAS","DIFÍCEIS"],"Comunicação Não Violenta":["COMUNICAÇÃO","NÃO VIOLENTA"]};
 function drawWheel(doc,cx,cy,R,lv){
   const r0=R*300/346, pt=(r,a)=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];
   doc.setFillColor("#8b7fb8"); doc.circle(cx,cy,R,"F");
@@ -2434,11 +2435,13 @@ function drawWheel(doc,cx,cy,R,lv){
   doc.setLineWidth(.6);
   for(let k=0;k<12;k++){ const [x,y]=pt(R,-120+30*k); doc.line(cx,cy,x,y); }
   WHEEL_NAMES.forEach((nm,k)=>{
-    const mid=-120+30*k+15, rr=(R+r0)/2, label=(WHEEL_LABELS[nm]||nm).toUpperCase();
-    let fs=6.4; doc.setFont("helvetica","bold"); doc.setFontSize(fs);
-    const arc=rr*Math.PI/6*0.88, w=doc.getTextWidth(label);
-    if(w>arc) fs=fs*arc/w;
-    arcText(doc,label,cx,cy,rr,mid,fs);
+    const mid=-120+30*k+15, rr=(R+r0)/2, down=mid>0&&mid<180, lines=WHEEL_2L[nm]||[(WHEEL_LABELS[nm]||nm).toUpperCase()];
+    let fs=lines.length>1?5.6:6.4; const ls=fs*1.12;
+    /* raio de cada linha: na metade de cima a 1ª linha fica por fora; na de baixo, por dentro */
+    const rad=lines.map((_,i)=>lines.length>1?rr+(down?-1:1)*(0.5-i)*ls:rr);
+    doc.setFont("helvetica","bold"); doc.setFontSize(fs);
+    lines.forEach((t,i)=>{ const w=doc.getTextWidth(t), arc=rad[i]*Math.PI/6*0.9; if(w>arc) fs=Math.min(fs,fs*arc/w); });
+    lines.forEach((t,i)=>arcText(doc,t,cx,cy,rad[i],mid,fs));
   });
 }
 
@@ -2506,7 +2509,7 @@ function pgVisao(doc,R,art){
   const list=(titulo,arr,notas,y)=>{
     txt(doc,titulo,305,y,9,C_PURPLE,true);
     arr.forEach((n,i)=>{ doc.setFillColor("#d9d4e8"); rrect(doc,305,y+8+i*27,196,20,5,"F");
-      txt(doc,(WHEEL_LABELS[n]||n),314,y+22+i*27,9.5,"#222222",true); txt(doc,notas[i]+"/10",494,y+22+i*27,9.5,"#222222",true,"right"); });
+      txt(doc,n,314,y+22+i*27,9.5,"#222222",true); txt(doc,notas[i]+"/10",494,y+22+i*27,9.5,"#222222",true,"right"); });
   };
   list("SEUS PONTOS FORTES",R.fortes,R.fortesN,190);
   list("OPORTUNIDADES DE DESENVOLVIMENTO",R.oport,R.oportN,288);
@@ -2529,7 +2532,7 @@ function pgTema(doc,t,res,art){
   txt(doc,t.nome.toUpperCase(),MX,108,t.nome.length>22?19:23,"#111111",true);
   let y=flow(doc,[{t:t.conceito}],MX,134,CW,{size:10,lh:12.8,just:true,color:"#333333"});
   y=flow(doc,[{t:"ESSÊNCIA AVALIADA:",b:true,c:"#111111"},{t:t.essencia}],MX,y+1,CW,{size:10,lh:12.8,just:true,color:"#333333"});
-  const top=Math.max(252,y+4), bot=522, px=MX+12, pw=CW-24, G=res.temas.find(x=>x.nome===t.nome).grupos;
+  const top=Math.max(272,y+28), bot=522, px=MX+12, pw=CW-24, G=res.temas.find(x=>x.nome===t.nome).grupos;
   const draw=(sz,on)=>{
     let cy=top+16+sz;
     FAIXAS.forEach(f=>{
@@ -2541,6 +2544,7 @@ function pgTema(doc,t,res,art){
     return cy;
   };
   let sz=10.4; while(sz>6.2 && draw(sz,false)>bot-8) sz-=.2;
+  txt(doc,"Você...",PW/2,top-10,15,"#111111",true,"center");
   doc.setDrawColor(C_PURPLE); doc.setLineWidth(1.3); rrect(doc,MX,top,CW,bot-top,16,"S"); draw(sz,true);
   /* síntese */
   txt(doc,"SÍNTESE DO DESENVOLVIMENTO NO TEMA",MX,548,12.5,C_PURPLE,true);
