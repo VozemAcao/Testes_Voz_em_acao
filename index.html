@@ -2509,11 +2509,11 @@ function pgVisao(doc,R,art){
   const list=(titulo,arr,notas,y)=>{
     txt(doc,titulo,305,y,9,C_PURPLE,true);
     arr.forEach((n,i)=>{ doc.setFillColor("#d9d4e8"); rrect(doc,305,y+8+i*27,196,20,5,"F");
-      txt(doc,n,314,y+22+i*27,9.5,"#222222",true); txt(doc,notas[i]+"/10",494,y+22+i*27,9.5,"#222222",true,"right"); });
+      txt(doc,n,314,y+22+i*27,9.5,"#222222",true); });
   };
   list("SEUS PONTOS FORTES",R.fortes,R.fortesN,190);
   list("OPORTUNIDADES DE DESENVOLVIMENTO",R.oport,R.oportN,288);
-  flow(doc,[{t:"Cada bloco de 4 afirmações vale de 2 a 10. O resultado fica salvo no seu planner; ao concluir cada tema, você poderá refazer a autoavaliação e ver quanto avançou."}],305,388,196,{size:6.5,lh:8,color:"#333333"});
+  flow(doc,[{t:"Esta Roda da Comunicação representa graficamente o resultado do teste que você respondeu."}],305,388,196,{size:6.5,lh:8,color:"#333333"});
   txt(doc,"RESULTADO DO SEU TESTE",MX,452,13,C_PURPLE,true);
   flow(doc,[{t:"Seu resultado não classifica sua comunicação como boa ou ruim. Ele mostra onde você já tem recursos consolidados, onde há potencial de evolução e quais comportamentos merecem maior atenção neste momento. Para facilitar a interpretação da sua devolutiva, os resultados foram organizados em três perspectivas de desenvolvimento:"}],MX,468,CW,{size:9.5,lh:12.3,just:true,color:"#1a1a1a"});
   [[31,0],[197,1],[367,2]].forEach(([x,i])=>{
