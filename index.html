@@ -1797,6 +1797,16 @@ let identity = store.get(LS_ID);
 if(identity && !identity.demo && state.ownerEmail && state.ownerEmail!==identity.email.toLowerCase()){
   state = {answers:{}, done:{}, page:0};
 }
+/* Links "só o teste": cada acesso começa um teste novo. Não retoma respostas, tela nem devolutiva do acesso anterior
+   (e esquece nome/e-mail, para que outra pessoa no mesmo aparelho não herde a identidade de quem usou antes).
+   REINICIAR_IDENTIDADE=false mantém só o nome/e-mail guardados. */
+const REINICIAR_IDENTIDADE = true;
+if(MODO){
+  state = {answers:{}, done:{}, page:0}; store.set(LS_ST,state);
+  if(REINICIAR_IDENTIDADE){ identity = null; try{ localStorage.removeItem(LS_ID); }catch(e){} }
+  /* voltar ao link pelo histórico/aba suspensa (celular) reaproveitaria a tela antiga: recarrega do zero */
+  window.addEventListener("pageshow", e=>{ if(e.persisted) location.reload(); });
+}
 let syncMsg = "", page = 0, flagMissing = null, toastT;
 const A = k => state.answers[k];
 
@@ -2782,7 +2792,7 @@ function syncUrl(){
   }catch(e){}
 }
 function startPage(){
-  if(MODO){ const s=idxOfKey(state.page); return s>0 && identity && identity.email && !canEnter(s) ? s : 0; }   // teste em andamento neste aparelho: continua; senão, capa
+  if(MODO) return 0;   // o link do teste sempre abre na capa e começa um teste novo
   let want=null; try{ want=new URLSearchParams(location.search).get("capitulo"); }catch(e){}
   wantSlug = want;
   if(!want) return 0;   // o link puro sempre abre na capa — "AQUI" decide se retoma o progresso
